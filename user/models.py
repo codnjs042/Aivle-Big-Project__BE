@@ -3,11 +3,10 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
 from django.db import models
 
 
-# Create your models here.
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, nickname, password):
+    def create_user(self, email, nickname, password, genre_preferences=0, singer_preferences=0):
 
         if not email:
             raise ValueError('must have user email')
@@ -18,7 +17,9 @@ class UserManager(BaseUserManager):
 
         user = self.model(
             email=self.normalize_email(email),
-            nickname=nickname
+            nickname=nickname,
+            genre_preferences=genre_preferences,
+            singer_preferences=singer_preferences
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -47,6 +48,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=30)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    genre_preferences = models.BigIntegerField(default=0)
+    singer_preferences = models.BigIntegerField(default=0)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']
