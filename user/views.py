@@ -1,8 +1,13 @@
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    permission_classes = (AllowAny,)
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -14,4 +19,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
+    permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
+
+
+class HelloView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        data = {'message': 'Hello, World!'}
+        return Response(data)
