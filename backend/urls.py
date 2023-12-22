@@ -24,7 +24,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from user.views import HelloView
+from user.views import HelloView, VerifyToken
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -43,5 +43,6 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/verify/', VerifyToken.as_view(), name='token_verify'),
     path('api/hello/', HelloView.as_view(), name='hello'),
 ]
