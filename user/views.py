@@ -1,18 +1,20 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.state import token_backend
+from rest_framework_simplejwt.tokens import TokenError, UntypedToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
-from backend import settings
-from user.models import User
-from user.serializer import MyTokenObtainPairSerializer, UserSerializer
+from user.serializer import CustomTokenVerifySerializer, \
+    MyTokenObtainPairSerializer
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
     permission_classes = (AllowAny,)
     serializer_class = MyTokenObtainPairSerializer
 
-class VerifyToken(TokenVerifyView):
+class MyTokenVerifyView(TokenVerifyView):
     permission_classes = (AllowAny,)
+    serializer_class = CustomTokenVerifySerializer
 
 class HelloView(APIView):
     permission_classes = (AllowAny,)
