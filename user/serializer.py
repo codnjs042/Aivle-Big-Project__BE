@@ -40,10 +40,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 
-class CustomTokenVerifySerializer(TokenVerifySerializer):
+class MyTokenVerifySerializer(TokenVerifySerializer):
     def validate(self, attrs):
         super().validate(attrs)
         token = attrs['token']
+        print('pass')
         decoded_payload = token_backend.decode(token, verify=False)
         attrs['email'] = decoded_payload.get('email')
         attrs['nickname'] = decoded_payload.get('nickname')
