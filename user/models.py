@@ -7,14 +7,12 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def create_user(self, email, nickname, password, genre_preferences=0, singer_preferences=0):
-
         if not email:
             raise ValueError('must have user email')
         if not nickname:
             raise ValueError('must have user nickname')
         if not password:
             raise ValueError('must have user password')
-
         user = self.model(
             email=self.normalize_email(email),
             nickname=nickname,
@@ -26,7 +24,6 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, nickname, password):
-
         user = self.create_user(
             email=self.normalize_email(email),
             nickname=nickname,
@@ -48,8 +45,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=30)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    genre_preferences = models.BigIntegerField(default=0)
-    singer_preferences = models.BigIntegerField(default=0)
+    genre_preferences = models.PositiveBigIntegerField(default=0)
+    singer_preferences = models.PositiveBigIntegerField(default=0)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']

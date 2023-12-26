@@ -1,3 +1,7 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import MaxLengthValidator, MinValueValidator
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.serializers import TokenVerifySerializer
@@ -23,6 +27,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['singer_preferences'] = user.singer_preferences
         return token
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user = self.user
+        user.last_login = timezone.now()
+        user.save(update_fields=['last_login'])
+
+        data['email'] = self.user.email
+        data['nickname'] = self.user.nickname
+        data['genre_preferences'] = self.user.genre_preferences
+        data['singer_preferences'] = self.user.singer_preferences
+        return data
+
 
 class CustomTokenVerifySerializer(TokenVerifySerializer):
     def validate(self, attrs):
@@ -33,4 +49,21 @@ class CustomTokenVerifySerializer(TokenVerifySerializer):
         attrs['nickname'] = decoded_payload.get('nickname')
         attrs['genre_preferences'] = decoded_payload.get('genre_preferences')
         attrs['singer_preferences'] = decoded_payload.get('singer_preferences')
+        del attrs['token']
         return attrs
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True,
+                                     validators=[validate_password])
+    nickname = serializers.CharField(validators=[MaxLengthValidator(30)])
+    genre_preferences = serializers.IntegerField(
+        validators=[MinValueValidator(0)])
+    singer_preferences = serializers.IntegerField(
+        validators=[MinValueValidator(0)])
+
+    class Meta:
+        model = get_user_model()
+        fields = ('email', 'password', 'nickname', 'genre_preferences',
+                  'singer_preferences')
