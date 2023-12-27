@@ -17,18 +17,18 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        # recaptcha 검증
+        #captcha_value = request.data.get('captcha')
+        #print('captcha: ', captcha_value)
+
         response = super().post(request, *args, **kwargs)
         print('created', response.data['refresh'])
         response.set_cookie(
             'refresh_token',
             response.data['refresh'],
             httponly=True,
-            samesite='None', # todo 보안에 취약하니 업데이트 필요
+            samesite='None',
         )
-        del response.data['refresh']
-        refresh = request.COOKIES.get('refresh_token')
-        print('cookie exist', refresh)
-        response.data['refresh'] = refresh
         return response
 
 
