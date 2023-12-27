@@ -1,13 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.serializers import TokenVerifySerializer
-from rest_framework_simplejwt.state import token_backend
 
 from user.models import User
+from user.validators import CustomPasswordValidator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,10 +23,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         user.save(update_fields=['last_login'])
         return data
 
+
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True,
-                                     validators=[validate_password])
+                                     validators=[CustomPasswordValidator()])
     nickname = serializers.CharField(validators=[MaxLengthValidator(30)])
     genre_preferences = serializers.IntegerField(
         validators=[MinValueValidator(0)])
