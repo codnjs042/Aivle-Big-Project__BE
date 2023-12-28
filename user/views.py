@@ -7,10 +7,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, \
     TokenObtainPairView, TokenRefreshView
-import requests
 
-from backend.settings import GOOGLE_RECAPTCHA, SIMPLE_JWT
-from user.serializer import MyTokenObtainPairSerializer, RegisterSerializer, \
+from backend.settings import SIMPLE_JWT
+from user.serializer import MyTokenObtainPairSerializer, ReCaptchaSerializer, \
+    RegisterSerializer, \
     UserSerializer
 
 
@@ -19,19 +19,12 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        # recaptcha 검증
-        data = {
-            'secret': GOOGLE_RECAPTCHA['SECRET_KEY'],
-            'response': request.data.get('captcha')
-        }
-        verification_response = requests.post(GOOGLE_RECAPTCHA['URL'], data=data)
-        verification_result = verification_response.json()
-        print('reCAPTCHA verification result: ', verification_result)
-        if not verification_result.get('success'):
-            return Response({'detail': 'Go Home ROBOT'}, status=status.HTTP_403_FORBIDDEN)
+        recaptcha_serializer = ReCaptchaSerializer(data=request.data)
+        if not recaptcha_serializer.is_valid():
+            return Response(recaptcha_serializer.errors,
+                            status=status.HTTP_403_FORBIDDEN)
 
         response = super().post(request, *args, **kwargs)
-        print('created', response.data['refresh'])
         response.set_cookie(
             'refresh_token',
             response.data['refresh'],
@@ -60,13 +53,10 @@ class MyTokenBlacklistView(TokenBlacklistView):
 
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get('refresh_token')
-        if refresh_token is not None:
+        if refresh_token:
             token = RefreshToken(refresh_token)
             token.blacklist()
-        response = Response({'detail': '로그인 상태가 아닙니다.'})
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
-        return response
+        return Response({'detail': "로그아웃 되었습니다."}, status=status.HTTP_205_RESET_CONTENT)
 
 
 class EmailVerificationView(generics.RetrieveAPIView):
@@ -101,21 +91,18 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        data = {
-            'secret': GOOGLE_RECAPTCHA['SECRET_KEY'],
-            'response': request.data.get('captcha')
-        }
-        verification_response = requests.post(GOOGLE_RECAPTCHA['URL'], data=data)
-        verification_result = verification_response.json()
-        if not verification_result.get('success'):
-            return Response({'detail': 'Go Home ROBOT'}, status=status.HTTP_403_FORBIDDEN)
+        recaptcha_serializer = ReCaptchaSerializer(data=request.data)
+        if not recaptcha_serializer.is_valid():
+            return Response(recaptcha_serializer.errors,
+                            status=status.HTTP_403_FORBIDDEN)
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({'detail': "요청에 문제가 있습니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': "요청에 문제가 있습니다."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer):
         get_user_model().objects.create_user(**serializer.validated_data)

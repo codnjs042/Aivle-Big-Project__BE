@@ -1,43 +1,66 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
+from .models import Post
+from .serializers import PostListSerializer, \
+    PostSerializer
+from django.db.models import Case, When, Value, IntegerField
+from rest_framework.pagination import PageNumberPagination
 
-from .models import Notice
-from .serializers import NoticeListSerializer
+class PostListView(APIView):
+    permission_classes = [IsAuthenticated]
 
-@api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
-def notice_list(request):
-    if request.method == "GET":
-        notices = Notice.objects.all()
-        serializer = NoticeListSerializer(notices, many=True)
+    def get(self, request):
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+
+        posts = Post.objects.annotate(
+            is_admin_order=Case(
+                When(user__is_admin=True, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).order_by('-is_admin_order')
+        page = paginator.paginate_queryset(posts, request)
+        if page is not None:
+            serializer = PostListSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        serializer = PostListSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
-    
-    elif request.method == "POST":
-        serializer = NoticeListSerializer(data=request.data)
+
+    @extend_schema(request=PostSerializer)
+    def post(self, request):
+        serializer = PostSerializer(data=request.data, context={'request': request})
+        print(request.headers)
+        print(request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=201)
-        else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PATCH', 'DELETE'])
-@permission_classes([AllowAny])
-def notice(request, pk):
-    notice_instance = get_object_or_404(Notice, pk=pk)
-    if request.method == "GET":
-        serializer = NoticeListSerializer(notice_instance)
+
+class PostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        notice = get_object_or_404(Post, pk=pk)
+        serializer = PostSerializer(notice)
         return Response(serializer.data)
-    
-    elif request.method == "PATCH":
-        serializer = NoticeListSerializer(notice_instance, data=request.data)
+
+    @extend_schema(request=PostSerializer)
+    def patch(self, request, pk):
+        notice = get_object_or_404(Post, pk=pk)
+        serializer = PostSerializer(notice, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == "DELETE":
-        notice_instance.delete()
-        return Response({'message': '삭제되었습니다.'})
+    def delete(self, request, pk):
+        notice = get_object_or_404(Post, pk=pk)
+        notice.delete()
+        return Response({'message': '삭제되었습니다.'},
+                        status=status.HTTP_204_NO_CONTENT)

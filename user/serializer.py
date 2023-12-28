@@ -3,7 +3,8 @@ from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+import requests
+from backend.settings import GOOGLE_RECAPTCHA
 from user.models import User
 from user.validators import CustomPasswordValidator
 
@@ -11,8 +12,8 @@ from user.validators import CustomPasswordValidator
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('email', 'nickname', 'genre_preferences',
-                  'singer_preferences')
+        fields = ('email', 'nickname', 'selectedGenres',
+                  'selectedArtist')
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -38,3 +39,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ('email', 'password', 'nickname', 'selectedGenres',
                   'selectedArtist')
+
+
+class ReCaptchaSerializer(serializers.Serializer):
+    captcha = serializers.CharField(write_only=True)
+
+    def validate_capcha(self, value):
+        data = {
+            'secret': GOOGLE_RECAPTCHA['SECRET_KEY'],
+            'response': value
+        }
+        verification_response = requests.post(GOOGLE_RECAPTCHA['URL'],
+                                              data=data)
+        verification_result = verification_response.json()
+        print('reCAPTCHA verification result: ', verification_result)
+        if not verification_result.get('success'):
+            raise serializers.ValidationError('Go Home ROBOT')
+        return value
