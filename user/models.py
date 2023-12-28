@@ -6,7 +6,7 @@ from django.db import models
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, nickname, password, genre_preferences=0, singer_preferences=0):
+    def create_user(self, email, nickname, password, selectedGenres, selectedArtist):
         if not email:
             raise ValueError('must have user email')
         if not nickname:
@@ -16,8 +16,8 @@ class UserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),
             nickname=nickname,
-            genre_preferences=genre_preferences,
-            singer_preferences=singer_preferences
+            selectedGenres=selectedGenres,
+            selectedArtist=selectedArtist
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -45,8 +45,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     nickname = models.CharField(max_length=30)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-    genre_preferences = models.PositiveBigIntegerField(default=0)
-    singer_preferences = models.PositiveBigIntegerField(default=0)
+    selectedGenres = models.PositiveBigIntegerField(default=0)
+    selectedArtist = models.PositiveBigIntegerField(default=0)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nickname']

@@ -62,7 +62,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 CORS_ORIGIN_WHITELIST = [
     'http://127.0.0.1:3000',
     'http://localhost:3000'
@@ -120,6 +119,11 @@ SIMPLE_JWT = {
 
 ROOT_URLCONF = 'backend.urls'
 
+GOOGLE_RECAPTCHA = {
+    "URL": 'https://www.google.com/recaptcha/api/siteverify',
+    "SECRET_KEY": '6Lc5sTspAAAAAMTmZGwEAWOin-_9p4irYQ6RxE4R',
+}
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -166,7 +170,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
     {
-        'NAME': 'users.validators.CustomPasswordValidator',
+        'NAME': 'user.validators.CustomPasswordValidator',
     },
 ]
 

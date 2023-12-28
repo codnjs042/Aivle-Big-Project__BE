@@ -29,12 +29,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True,
                                      validators=[CustomPasswordValidator()])
     nickname = serializers.CharField(validators=[MaxLengthValidator(30)])
-    genre_preferences = serializers.IntegerField(
+    selectedGenres = serializers.IntegerField(
         validators=[MinValueValidator(0)])
-    singer_preferences = serializers.IntegerField(
+    selectedArtist = serializers.IntegerField(
         validators=[MinValueValidator(0)])
 
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'nickname', 'genre_preferences',
-                  'singer_preferences')
+        fields = ('email', 'password', 'nickname', 'selectedGenres',
+                  'selectedArtist')

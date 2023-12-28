@@ -7,7 +7,9 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, \
     TokenObtainPairView, TokenRefreshView
+import requests
 
+from backend.settings import GOOGLE_RECAPTCHA, SIMPLE_JWT
 from user.serializer import MyTokenObtainPairSerializer, RegisterSerializer, \
     UserSerializer
 
@@ -18,8 +20,15 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         # recaptcha 검증
-        #captcha_value = request.data.get('captcha')
-        #print('captcha: ', captcha_value)
+        data = {
+            'secret': GOOGLE_RECAPTCHA['SECRET_KEY'],
+            'response': request.data.get('captcha')
+        }
+        verification_response = requests.post(GOOGLE_RECAPTCHA['URL'], data=data)
+        verification_result = verification_response.json()
+        print('reCAPTCHA verification result: ', verification_result)
+        if not verification_result.get('success'):
+            return Response({'detail': 'Go Home ROBOT'}, status=status.HTTP_403_FORBIDDEN)
 
         response = super().post(request, *args, **kwargs)
         print('created', response.data['refresh'])
@@ -27,7 +36,8 @@ class MyTokenObtainPairView(TokenObtainPairView):
             'refresh_token',
             response.data['refresh'],
             httponly=True,
-            samesite='None',
+            samesite='Lax',
+            max_age=SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds(),
         )
         return response
 
@@ -89,6 +99,23 @@ class RegisterView(generics.CreateAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = RegisterSerializer
     permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        data = {
+            'secret': GOOGLE_RECAPTCHA['SECRET_KEY'],
+            'response': request.data.get('captcha')
+        }
+        verification_response = requests.post(GOOGLE_RECAPTCHA['URL'], data=data)
+        verification_result = verification_response.json()
+        if not verification_result.get('success'):
+            return Response({'detail': 'Go Home ROBOT'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': "요청에 문제가 있습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer):
         get_user_model().objects.create_user(**serializer.validated_data)
