@@ -6,7 +6,7 @@ from django.db import models
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def create_user(self, email, nickname, password, selectedGenres, selectedArtist):
+    def create_user(self, email, nickname, password, selectedGenres=0, selectedArtist=0):
         if not email:
             raise ValueError('must have user email')
         if not nickname:
