@@ -19,10 +19,10 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        recaptcha_serializer = ReCaptchaSerializer(data=request.data)
-        if not recaptcha_serializer.is_valid():
-            return Response(recaptcha_serializer.errors,
-                            status=status.HTTP_403_FORBIDDEN)
+        #recaptcha_serializer = ReCaptchaSerializer(data=request.data)
+        #if not recaptcha_serializer.is_valid():
+        #    return Response(recaptcha_serializer.errors,
+        #                    status=status.HTTP_403_FORBIDDEN)
 
         response = super().post(request, *args, **kwargs)
         response.set_cookie(
