@@ -27,7 +27,9 @@ class UserManager(BaseUserManager):
         user = self.create_user(
             email=self.normalize_email(email),
             nickname=nickname,
-            password=password
+            password=password,
+            selectedGenres=0,
+            selectedArtist=0
         )
         user.is_admin = True
         user.is_superuser = True
