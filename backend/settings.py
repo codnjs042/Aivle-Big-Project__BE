@@ -84,6 +84,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Aivle 21조 API 명세서',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True
 }
 
 SIMPLE_JWT = {
@@ -140,6 +141,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 

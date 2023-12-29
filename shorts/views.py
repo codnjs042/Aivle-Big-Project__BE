@@ -4,13 +4,15 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class UploadShortsView(generics.CreateAPIView):
     # permission_classes = [AllowAny]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ShortFormSerializer
-    
+    parser_classes = (MultiPartParser,)
+
     def post(self, request, *args, **kwargs):
         current_user = request.user
         serializer = self.get_serializer(data=request.data)
