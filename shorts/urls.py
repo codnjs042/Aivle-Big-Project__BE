@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import UploadShortsView
+from .views import ShortsView, StreamShortFileView
 
 urlpatterns = [
-    path('upload/', UploadShortsView.as_view(), name='short_upload'),
+    path('shorts/', ShortsView.as_view(), name='shorts'),
+    path('stream/', StreamShortFileView.as_view(), name='short_stream'),
 ]
