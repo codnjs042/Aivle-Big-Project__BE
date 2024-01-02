@@ -11,3 +11,8 @@ class ShortForm(models.Model):
     
     def __str__(self):
         return self.title
+    
+    @property
+    def update_counter(self):
+        self.view = self.view + 1
+        self.save()

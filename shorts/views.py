@@ -26,6 +26,7 @@ class ShortsView(generics.CreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
         try:
             short_form = ShortForm.objects.get(pk=short_id)
+            short_form.update_counter  # 조회수 증가
         except ShortForm.DoesNotExist:
             return Response({'message': 'ShortForm not found'},
                             status=status.HTTP_404_NOT_FOUND)
