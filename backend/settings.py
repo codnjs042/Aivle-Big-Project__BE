@@ -18,12 +18,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = os.path.dirname(BASE_DIR)
-SECRET_BASE_FILE = os.path.join(BASE_DIR, 'secrets.json')
-secrets = json.loads(open(SECRET_BASE_FILE).read())
-for key, value in secrets.items():
-    setattr(sys.modules[__name__], key, value)
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-$2k3j%o%t7@d5xtebd&tdlmj816#htg27rt7sr6webyxra1qs='
