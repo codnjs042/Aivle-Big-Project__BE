@@ -5,6 +5,8 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+import os
 
 from .serializers import *
 
@@ -35,7 +37,7 @@ class ShortsView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.validated_data['author'] = current_user.id
+            serializer.validated_data['author'] = current_user
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -44,6 +46,23 @@ class ShortsView(generics.CreateAPIView):
     def perform_create(self, serializer):
         # 유효한 데이터 저장
         serializer.save()
+
+    @extend_schema(parameters=[
+        OpenApiParameter(name="id", description="쇼츠 아이디", required=True,
+                         type=int)])
+    def delete(self, request, *args, **kwargs):
+        short_id = request.query_params.get('id')
+        short_form = get_object_or_404(ShortForm, pk=short_id)
+        file_path = short_form.file_path.path
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            short_form.delete()
+            return Response({"message": "삭제되었습니다."}, 
+                            status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StreamShortFileView(APIView):
