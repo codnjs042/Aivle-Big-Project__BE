@@ -5,6 +5,8 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404
 import os
 
@@ -76,7 +78,6 @@ class ShortsView(generics.CreateAPIView):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-
 class StreamShortFileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -96,3 +97,19 @@ class StreamShortFileView(APIView):
             'Content-Disposition'] = f'inline; filename="{short_form.file_path.name}"'
 
         return response
+
+
+class ShortsListView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        
+        shorts = ShortForm.objects.all()
+        page = paginator.paginate_queryset(shorts, request)
+        if page is not None:
+            serializer = ShortsListSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        serializer = ShortsListSerializer(shorts, many=True, context={'request': request})
+        return Response(serializer.data)

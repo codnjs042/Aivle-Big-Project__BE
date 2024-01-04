@@ -11,4 +11,4 @@ class ShortsListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ShortForm
-        fields = ('id', 'title', 'file_path', 'view', 'created_at', 'author_name')
+        fields = ('id', 'title', 'view', 'created_at', 'author_name')
