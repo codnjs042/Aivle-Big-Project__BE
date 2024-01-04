@@ -33,6 +33,7 @@ class ShortsView(generics.CreateAPIView):
         serializer = ShortFormSerializer(short_form)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
     def post(self, request, *args, **kwargs):
         current_user = request.user
         serializer = self.get_serializer(data=request.data)
@@ -48,12 +49,21 @@ class ShortsView(generics.CreateAPIView):
         # 유효한 데이터 저장
         serializer.save()
 
+
     @extend_schema(parameters=[
         OpenApiParameter(name="id", description="쇼츠 아이디", required=True,
                          type=int)])
     def delete(self, request, *args, **kwargs):
         short_id = request.query_params.get('id')
+        if not short_id:
+            return Response({'message': 'No short ID provided'},
+                            status=status.HTTP_400_BAD_REQUEST)
+            
         short_form = get_object_or_404(ShortForm, pk=short_id)
+        if request.user != short_form.author:
+            return Response({'message': 'No User permissions'},
+                            status=status.HTTP_403_FORBIDDEN)
+        
         file_path = short_form.file_path.path
         try:
             if os.path.exists(file_path):
@@ -64,6 +74,7 @@ class ShortsView(generics.CreateAPIView):
                             status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
 
 class StreamShortFileView(APIView):
