@@ -159,3 +159,19 @@ class ResultView(APIView):
             "data": serializer.data
         }
         return Response(send)
+
+
+class BookmarkView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        email = request.user.id
+        try:
+            bookmark = Bookmark.objects.filter(email=email, is_bookmarked=True)
+            
+        except Bookmark.DoesNotExist:
+            return Response({'message': 'Bookmark is not found'},
+                            status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = BookmarkSerializer(bookmark, many=True)
+        return Response(serializer.data)
