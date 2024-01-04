@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'user',
     'introduce',
     'shorts',
+    'study',
 ]
 
 MIDDLEWARE = [
