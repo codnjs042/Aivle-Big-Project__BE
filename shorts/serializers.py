@@ -14,6 +14,7 @@ class ShortFormSerializer(serializers.ModelSerializer):
 
 class ShortsListSerializer(serializers.ModelSerializer):
     author_name = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
     
     class Meta:
         model = ShortForm
@@ -21,3 +22,6 @@ class ShortsListSerializer(serializers.ModelSerializer):
 
     def get_author_name(self, obj):
         return obj.author.nickname
+    
+    def get_created_at(self, obj):
+        return obj.created_at.date().isoformat()
