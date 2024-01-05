@@ -18,24 +18,6 @@ class ShortsView(generics.CreateAPIView):
     serializer_class = ShortFormSerializer
     parser_classes = (MultiPartParser,)
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name="id", description="쇼츠 아이디", required=True,
-                         type=int)])
-    def get(self, request, *args, **kwargs):
-        short_id = request.query_params.get('id')
-        if not short_id:
-            return Response({'message': 'No short ID provided'},
-                            status=status.HTTP_400_BAD_REQUEST)
-        try:
-            short_form = ShortForm.objects.get(pk=short_id)
-            short_form.update_counter  # 조회수 증가
-        except ShortForm.DoesNotExist:
-            return Response({'message': 'ShortForm not found'},
-                            status=status.HTTP_404_NOT_FOUND)
-        serializer = ShortFormSerializer(short_form)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
     def post(self, request, *args, **kwargs):
         current_user = request.user
         serializer = self.get_serializer(data=request.data)
@@ -52,11 +34,25 @@ class ShortsView(generics.CreateAPIView):
         serializer.save()
 
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name="id", description="쇼츠 아이디", required=True,
-                         type=int)])
-    def delete(self, request, *args, **kwargs):
-        short_id = request.query_params.get('id')
+class ShortFormView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, id, *args, **kwargs):
+        short_id = id
+        if short_id is None:
+            return Response({'message': 'No short ID provided'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            short_form = ShortForm.objects.get(pk=short_id)
+            short_form.update_counter  # 조회수 증가
+        except ShortForm.DoesNotExist:
+            return Response({'message': 'ShortForm not found'},
+                            status=status.HTTP_404_NOT_FOUND)
+        serializer = ShortFormSerializer(short_form)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, id, *args, **kwargs):
+        short_id = id
         if not short_id:
             return Response({'message': 'No short ID provided'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -76,7 +72,7 @@ class ShortsView(generics.CreateAPIView):
                             status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+    
 
 class StreamShortFileView(APIView):
     permission_classes = [IsAuthenticated]
