@@ -22,7 +22,6 @@ from sklearn.preprocessing import MinMaxScaler
 class SentencesListView(APIView):
     permission_classes = [IsAuthenticated]
     
-
     def get(self, request):
         paginator = PageNumberPagination()
         paginator.page_size = 10
@@ -35,26 +34,6 @@ class SentencesListView(APIView):
         serializer = SentenceSerializer(sentences, many=True, context={'request': request})
         return Response(serializer.data)
     
-    def post(self, request):
-        paginator = PageNumberPagination()
-        paginator.page_size = 10
-        
-        email = request.user.email
-        #email = 'admin@naver.com' #test
-        user = User.objects.get(email=email)
-        user_id = user.id
-        bookmarked_sentence_ids = Bookmark.objects.filter(email=user_id, is_bookmarked=True).values_list('sentence', flat=True)
-
-        # 북마크된 문장들만 가져오기
-        sentences = Sentence.objects.filter(id__in=bookmarked_sentence_ids)
-
-        page = paginator.paginate_queryset(sentences, request)
-        if page is not None:
-            serializer = SentenceSerializer(page, many=True, context={'request': request})
-            return paginator.get_paginated_response(serializer.data)
-        
-        serializer = SentenceSerializer(sentences, many=True, context={'request': request})
-        return Response(serializer.data)
     
 # 음성 데이터 전처리 함수 정의
 def process_audio_file(file_path, target_sr=20000):
@@ -161,15 +140,24 @@ class BookmarkView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        email = request.user.id
-        try:
-            bookmark = Bookmark.objects.filter(email=email, is_bookmarked=True)
-            
-        except Bookmark.DoesNotExist:
-            return Response({'message': 'Bookmark is not found'},
-                            status=status.HTTP_404_NOT_FOUND)
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
         
-        serializer = BookmarkSerializer(bookmark, many=True)
+        email = request.user.email
+        #email = 'admin@naver.com' #test
+        user = User.objects.get(email=email)
+        user_id = user.id
+        bookmarked_sentence_ids = Bookmark.objects.filter(email=user_id, is_bookmarked=True).values_list('sentence', flat=True)
+
+        # 북마크된 문장들만 가져오기
+        sentences = Sentence.objects.filter(id__in=bookmarked_sentence_ids)
+
+        page = paginator.paginate_queryset(sentences, request)
+        if page is not None:
+            serializer = SentenceSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = SentenceSerializer(sentences, many=True, context={'request': request})
         return Response(serializer.data)
     
     
@@ -180,7 +168,7 @@ class AIReportView(APIView):
         auth = request.user.id
         data = Result.objects.filter(email=auth)
         pronun_prof_eval_avg = data.aggregate(Avg('PronunProfEval'))['PronunProfEval__avg']
-        fluency_eval_avg = data.aggregate(Avg('FluencyEval'))['FluencyEval__avg']
+        fluency_eval_avg = data.aggregathenticae(Avg('FluencyEval'))['FluencyEval__avg']
         comprehend_eval_avg = data.aggregate(Avg('ComprehendEval'))['ComprehendEval__avg']
         
         if pronun_prof_eval_avg is None or fluency_eval_avg is None or comprehend_eval_avg is None:
@@ -205,7 +193,7 @@ class AIReportView(APIView):
         #     }
         #     syllable_scores.append(syllable_data)
         
-        data = {  # 발음 숙련도, 유창성, 이해가능도 각 평균 + 음절별 점수 
+        data = {  # 발음 숙련도, 유창성, 이해가능도 각 평균(100% 단위)  # + 음절별 점수 
             "pronun_prof_eval_avg": round(pronun_prof_eval_avg*20, 1),
             "fluency_eval_avg": round(fluency_eval_avg*20, 1),
             "comprehend_eval_avg": round(comprehend_eval_avg*20, 1),
