@@ -3,7 +3,7 @@ from django.db.models import Avg
 
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
@@ -13,8 +13,8 @@ from .serializers import *
 from user.models import User
 
 import os
-import pickle
-import librosa #pip install librosa
+import tensorflow as tf
+import librosa
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
@@ -103,16 +103,14 @@ class SentenceView(APIView):
         mel_spectrogram = extract_mel_spectrogram(audio_data)
         preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
         # 모델에 데이터 입력 및 예측
-        model_path = "my_audio_test_model.pkl"
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
+        model = tf.keras.models.load_model("my_model.h5")
         predictions = model.predict(preprocessed_data)
         
         # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
         sentence_instance = Sentence.objects.get(pk=pk)
         # Result 모델에 저장
         result_instance = Result.objects.create(
-        #email=request.user.email,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
+        email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
         sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
         PronunProfEval=predictions[0][0],
         FluencyEval=predictions[1][0],
@@ -168,7 +166,7 @@ class AIReportView(APIView):
         auth = request.user.id
         data = Result.objects.filter(email=auth)
         pronun_prof_eval_avg = data.aggregate(Avg('PronunProfEval'))['PronunProfEval__avg']
-        fluency_eval_avg = data.aggregathenticae(Avg('FluencyEval'))['FluencyEval__avg']
+        fluency_eval_avg = data.aggregate(Avg('FluencyEval'))['FluencyEval__avg']
         comprehend_eval_avg = data.aggregate(Avg('ComprehendEval'))['ComprehendEval__avg']
         
         if pronun_prof_eval_avg is None or fluency_eval_avg is None or comprehend_eval_avg is None:
