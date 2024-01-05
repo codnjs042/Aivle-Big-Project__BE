@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -175,3 +176,44 @@ class BookmarkView(APIView):
         
         serializer = BookmarkSerializer(bookmark, many=True)
         return Response(serializer.data)
+    
+    
+class AIReportView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        auth = request.user.id
+        data = Result.objects.filter(email=auth)
+        pronun_prof_eval_avg = data.aggregate(Avg('PronunProfEval'))['PronunProfEval__avg']
+        fluency_eval_avg = data.aggregate(Avg('FluencyEval'))['FluencyEval__avg']
+        comprehend_eval_avg = data.aggregate(Avg('ComprehendEval'))['ComprehendEval__avg']
+        
+        if pronun_prof_eval_avg is None or fluency_eval_avg is None or comprehend_eval_avg is None:
+            return Response({'message': 'Ai Report score not found'},
+                            status=status.HTTP_404_NOT_FOUND)
+        # 음절별 점수와 전체 평균 점수
+        # user_syllable_reports = SyllableReport.objects.filter(user=user_id)
+        # syllable_averages = SyllableReport.objects.values('syllable').annotate(avg_score=Avg('score'))
+        
+        # syllable_scores = []
+        # for report in user_syllable_reports:
+        #     average_score = None
+        #     for item in syllable_averages:
+        #         if item['syllable'] == report.syllable:
+        #             average_score = item['avg_score']  # 같은 음절의 전체 사용자 평균 점수
+        #             break
+            
+        #     syllable_data = {
+        #         "syllable": report.syllable,  # 현재 음절
+        #         "score": report.score,  # 현재 사용자의 점수
+        #         "avg": round(average_score)  # 전체 사용자들의 평균 점수
+        #     }
+        #     syllable_scores.append(syllable_data)
+        
+        data = {  # 발음 숙련도, 유창성, 이해가능도 각 평균 + 음절별 점수 
+            "pronun_prof_eval_avg": round(pronun_prof_eval_avg*20, 1),
+            "fluency_eval_avg": round(fluency_eval_avg*20, 1),
+            "comprehend_eval_avg": round(comprehend_eval_avg*20, 1),
+            # "syllable_scores": syllable_scores,
+        }
+        return Response(data)

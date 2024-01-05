@@ -15,7 +15,11 @@ class ResultSerializer(serializers.ModelSerializer):
         fields = ['email', 'ko_text', 'PronunProfEval', 'FluencyEval', 'ComprehendEval']
 
 class BookmarkSerializer(serializers.ModelSerializer):
+    text = serializers.SerializerMethodField()
 
     class Meta:
         model = Bookmark
-        fields = ['ko_text', 'is_bookmarked']
+        fields = ['text', 'is_bookmarked']
+        
+    def get_text(self, obj):
+        return obj.ko_text.ko_text
