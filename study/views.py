@@ -43,7 +43,7 @@ class SentencesListView(APIView):
         #email = 'admin@naver.com' #test
         user = User.objects.get(email=email)
         user_id = user.id
-        bookmarked_sentence_ids = Bookmark.objects.filter(email=user_id, is_bookmarked=True).values_list('ko_text', flat=True)
+        bookmarked_sentence_ids = Bookmark.objects.filter(email=user_id, is_bookmarked=True).values_list('sentence', flat=True)
 
         # 북마크된 문장들만 가져오기
         sentences = Sentence.objects.filter(id__in=bookmarked_sentence_ids)
@@ -82,7 +82,7 @@ class SentenceView(APIView):
         sentence = get_object_or_404(Sentence, pk=pk)
         serializer = SentenceSerializer(sentence)
         try:
-            bookmark = Bookmark.objects.get(ko_text=sentence)
+            bookmark = Bookmark.objects.get(sentence=sentence)
             is_bookmarked = bookmark.is_bookmarked #북마크가 있으면 북마크의 값을 출력(T/F)
         except Bookmark.DoesNotExist: # Bookmark 객체가 없을 경우에 대한 처리
             is_bookmarked = False  # 북마크를 한번도 표시하지 않은 경우 False 입력
@@ -97,11 +97,11 @@ class SentenceView(APIView):
             sentence = get_object_or_404(Sentence, pk=pk)
             serializer = SentenceSerializer(sentence)
             user = request.user
-            bookmark, created = Bookmark.objects.get_or_create(ko_text=sentence, email=user)
+            bookmark, created = Bookmark.objects.get_or_create(sentence=sentence, email=user)
             bookmark.is_bookmarked = not bookmark.is_bookmarked
             bookmark.save()
             
-            bookmark = get_object_or_404(Bookmark, ko_text=sentence).is_bookmarked
+            bookmark = get_object_or_404(Bookmark, sentence=sentence).is_bookmarked
             send = {
                 'data': serializer.data,
                 'is_bookmarked': bookmark
@@ -115,8 +115,8 @@ class SentenceView(APIView):
     def post(self, request, pk, *args, **kwargs):
         sentence = get_object_or_404(Sentence, pk=pk)
         print(sentence)
-        AudioFile.objects.create(email=request.user, ko_text=sentence, audio_path=request.data['audio_path'])
-        file_paths = get_list_or_404(AudioFile, ko_text=pk)
+        AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
+        file_paths = get_list_or_404(AudioFile, sentence=pk)
         file_path = file_paths[0].audio_path
         
         # 음성 데이터 전처리 및 모델 예측
@@ -134,7 +134,7 @@ class SentenceView(APIView):
         # Result 모델에 저장
         result_instance = Result.objects.create(
         #email=request.user.email,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
-        ko_text=sentence_instance,  # 적절한 Sentence 모델 인스턴스
+        sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
         PronunProfEval=predictions[0][0],
         FluencyEval=predictions[1][0],
         ComprehendEval=predictions[2][0])
@@ -146,9 +146,9 @@ class ResultView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        email = request.user.email
+        email = request.user.id
         text = get_object_or_404(Sentence, pk=pk).ko_text
-        result = Result.objects.filter(ko_text=pk, email=email)
+        result = Result.objects.filter(sentence=pk, email=email)
         serializer = ResultSerializer(result, many=True)
         send = {
             "ko_text":text,

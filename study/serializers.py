@@ -12,7 +12,7 @@ class ResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Result
-        fields = ['email', 'ko_text', 'PronunProfEval', 'FluencyEval', 'ComprehendEval']
+        fields = ['email', 'sentence', 'PronunProfEval', 'FluencyEval', 'ComprehendEval']
 
 class BookmarkSerializer(serializers.ModelSerializer):
     text = serializers.SerializerMethodField()
@@ -27,4 +27,4 @@ class BookmarkSerializer(serializers.ModelSerializer):
 class AudioFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioFile
-        fields = ['email','ko_text','audio_path']
+        fields = ['email','sentence','audio_path']
