@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Avg
 
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,13 +12,17 @@ from .models import *
 from .serializers import *
 from user.models import User
 
-import urllib3
-import json
-import base64
+import os
+import pickle
+import librosa #pip install librosa
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 # Create your views here.
 class SentencesListView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = AudioFileSerializer
+    parser_classes = (MultiPartParser,)
 
     def get(self, request):
         paginator = PageNumberPagination()
@@ -52,6 +57,22 @@ class SentencesListView(APIView):
         serializer = SentenceSerializer(sentences, many=True, context={'request': request})
         return Response(serializer.data)
     
+# 음성 데이터 전처리 함수 정의
+def process_audio_file(file_path, target_sr=20000):
+    audio, sr = librosa.load(file_path, sr=target_sr)
+    target_length = int(target_sr * 10)
+    if len(audio) < target_length:
+        padding = target_length - len(audio)
+        audio = np.pad(audio, (0, padding), mode='constant')
+    else:
+        audio = audio[:target_length]
+    scaler = MinMaxScaler()
+    audio = scaler.fit_transform(audio.reshape(-1, 1)).flatten()
+    return audio
+def extract_mel_spectrogram(audio, target_sr=20000):
+    mel_spectrogram = librosa.feature.melspectrogram(y=audio, sr=target_sr, n_mels=128)
+    mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
+    return mel_spectrogram
 
 class SentenceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -70,81 +91,54 @@ class SentenceView(APIView):
             }
         return Response(send)
     
-    def post(self, request, pk):
-        if request.FILES['audio_file']: #POST에 오디오파일이 존재
-            audio_file = request.FILES['audio_file']
-            openApiURL = "http://aiopen.etri.re.kr:8000/WiseASR/PronunciationKor" # 한국어
-            accessKey = "35c70df0-da4e-43e8-b927-473b1c4c43a4"
-            languageCode = "korean"
-            script = "PRONUNCIATION_SCRIPT"
-
-            audioContents = base64.b64encode(audio_file.read()).decode("utf8")
-
-            requestJson = {
-                "argument": {
-                    "language_code": languageCode,
-                    "script": script,
-                    "audio": audioContents
-                    }
+    def patch(self, request, pk, *args, **kwargs):
+        try:
+            sentence = get_object_or_404(Sentence, pk=pk)
+            serializer = SentenceSerializer(sentence)
+            user = request.user
+            bookmark, created = Bookmark.objects.get_or_create(ko_text=sentence, email=user)
+            bookmark.is_bookmarked = not bookmark.is_bookmarked
+            bookmark.save()
+            
+            bookmark = get_object_or_404(Bookmark, ko_text=sentence).is_bookmarked
+            send = {
+                'data': serializer.data,
+                'is_bookmarked': bookmark
             }
-            http = urllib3.PoolManager()
-            response = http.request(
-                "POST",
-                openApiURL,
-                headers={"Content-Type": "application/json; charset=UTF-8","Authorization": accessKey},
-                body=json.dumps(requestJson)
-            )
-            print("[responseCode] " + str(response.status))
-            print("[responBody]")
-            print(str(response.data,"utf-8"))
-            response_data = json.loads(response.data.decode("utf-8"))
-
-            if "return_object" in response_data and "score" in response_data["return_object"]:
-                score_str = response_data["return_object"]["score"]
-                try:
-                    score = float(score_str) if '.' in score_str else int(score_str)
-                except ValueError:
-                    print("평가 점수를 부동 소수점 숫자로 변환할 수 없습니다.")
-                    score = 0
-
-                PronunProfEval = score.get("pronunciation", 0)  # 발음 평가 점수
-                FluencyEval = score.get("fluency", 0)  # 유창성 평가 점수
-                ComprehendEval = score.get("comprehension", 0)  # 이해도 평가 점수
-
-                # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
-                sentence_instance = Sentence.objects.get(pk=pk)
-
-                # Result 모델에 저장
-                result_instance = Result.objects.create(
-                    email=request.user.email,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
-                    ko_text=sentence_instance,  # 적절한 Sentence 모델 인스턴스
-                    PronunProfEval=PronunProfEval,
-                    FluencyEval=FluencyEval,
-                    ComprehendEval=ComprehendEval
-                )
-                print("Result 객체가 성공적으로 생성되었습니다.")
-                return Response("Result 객체가 성공적으로 생성되었습니다.", status=status.HTTP_201_CREATED)
-            else:
-                print("JSON 응답에서 평가 점수를 찾을 수 없습니다.")
-                return Response("JSON 응답에서 평가 점수를 찾을 수 없습니다.", status=status.HTTP_400_BAD_REQUEST)
-        else: #즐겨찾기 체크
-            try:
-                sentence = get_object_or_404(Sentence, pk=pk)
-                bookmark, created = Bookmark.objects.get_or_create(ko_text=sentence)
-                bookmark.is_bookmarked = not bookmark.is_bookmarked
-                bookmark.save()
-
-                serializer = SentenceSerializer(sentence)
-                bookmark = get_object_or_404(Bookmark, ko_text=sentence).is_bookmarked
-                send = {
-                    'data': serializer.data,
-                    'is_bookmarked': bookmark
-                }
-                print("success")
-                return Response(send)
-            except Exception as e:
-                print("error")
-                return Response({'success':False, 'error':str(e)})
+            print("success")
+            return Response(send)
+        except Exception as e:
+            print("error")
+            return Response({'success':False, 'error':str(e)})
+    
+    def post(self, request, pk, *args, **kwargs):
+        sentence = get_object_or_404(Sentence, pk=pk)
+        print(sentence)
+        AudioFile.objects.create(email=request.user, ko_text=sentence, audio_path=request.data['audio_path'])
+        file_paths = get_list_or_404(AudioFile, ko_text=pk)
+        file_path = file_paths[0].audio_path
+        
+        # 음성 데이터 전처리 및 모델 예측
+        audio_data = process_audio_file(file_path)
+        mel_spectrogram = extract_mel_spectrogram(audio_data)
+        preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
+        # 모델에 데이터 입력 및 예측
+        model_path = "my_audio_test_model.pkl"
+        with open(model_path, 'rb') as file:
+            model = pickle.load(file)
+        predictions = model.predict(preprocessed_data)
+        
+        # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
+        sentence_instance = Sentence.objects.get(pk=pk)
+        # Result 모델에 저장
+        result_instance = Result.objects.create(
+        #email=request.user.email,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
+        ko_text=sentence_instance,  # 적절한 Sentence 모델 인스턴스
+        PronunProfEval=predictions[0][0],
+        FluencyEval=predictions[1][0],
+        ComprehendEval=predictions[2][0])
+        print("Result 객체가 성공적으로 생성되었습니다.")
+        return Response("Result 객체가 성공적으로 생성되었습니다.", status=status.HTTP_201_CREATED)
         
 
 class ResultView(APIView):

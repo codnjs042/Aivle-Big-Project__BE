@@ -23,3 +23,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
         
     def get_text(self, obj):
         return obj.ko_text.ko_text
+    
+class AudioFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudioFile
+        fields = ['email','ko_text','audio_path']

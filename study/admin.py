@@ -14,6 +14,11 @@ class BookmarkAdmin(admin.ModelAdmin):
     list_display = ['email','ko_text', 'is_bookmarked']
     list_display_links = ['email','ko_text', 'is_bookmarked']
 
+class AudioAdmin(admin.ModelAdmin):
+    list_display = ['email', 'ko_text','audio_path']
+    list_display_links = ['email', 'ko_text','audio_path']
+
 admin.site.register(Sentence, SentenceAdmin)
 admin.site.register(Result, ResultAdmin)
 admin.site.register(Bookmark, BookmarkAdmin)
+admin.site.register(AudioFile, AudioAdmin)

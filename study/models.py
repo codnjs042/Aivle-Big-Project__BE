@@ -38,3 +38,8 @@ class Bookmark(models.Model):
     email = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='bookmarks')
     ko_text = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name='bookmarks')
     is_bookmarked = models.BooleanField(default=False)
+
+class AudioFile(models.Model):
+    audio_path = models.FileField(upload_to='audios/')
+    email = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='audiofile', null=True)
+    ko_text = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name='audiofile', null=True)
