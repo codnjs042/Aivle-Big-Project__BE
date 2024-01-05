@@ -21,8 +21,7 @@ from sklearn.preprocessing import MinMaxScaler
 # Create your views here.
 class SentencesListView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = AudioFileSerializer
-    parser_classes = (MultiPartParser,)
+    
 
     def get(self, request):
         paginator = PageNumberPagination()
@@ -76,7 +75,9 @@ def extract_mel_spectrogram(audio, target_sr=20000):
 
 class SentenceView(APIView):
     permission_classes = [IsAuthenticated]
-
+    serializer_class = AudioFileSerializer
+    parser_classes = (MultiPartParser,)
+    
     def get(self, request, pk):
         sentence = get_object_or_404(Sentence, pk=pk)
         serializer = SentenceSerializer(sentence)
