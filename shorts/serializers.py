@@ -2,6 +2,11 @@ from rest_framework import serializers
 from shorts.models import ShortForm
 from user.models import User
 
+class ShortsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShortForm
+        fields = ('title', 'file_path')
+    
 class ShortFormSerializer(serializers.ModelSerializer):
     file_path = serializers.SerializerMethodField()
     

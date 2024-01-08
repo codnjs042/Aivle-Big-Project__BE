@@ -15,7 +15,7 @@ from .serializers import *
 
 class ShortsView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ShortFormSerializer
+    serializer_class = ShortsSerializer
     parser_classes = (MultiPartParser,)
 
     def post(self, request, *args, **kwargs):
