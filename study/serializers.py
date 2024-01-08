@@ -27,4 +27,4 @@ class BookmarkSerializer(serializers.ModelSerializer):
 class AudioFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioFile
-        fields = ['email','sentence','audio_path']
+        fields = ['audio_path']

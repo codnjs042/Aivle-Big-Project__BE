@@ -12,7 +12,6 @@ from .models import *
 from .serializers import *
 from user.models import User
 
-import os
 import tensorflow as tf
 import librosa
 import numpy as np
@@ -95,8 +94,8 @@ class SentenceView(APIView):
         sentence = get_object_or_404(Sentence, pk=pk)
         print(sentence)
         AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
-        file_paths = get_list_or_404(AudioFile, sentence=pk)
-        file_path = file_paths[0].audio_path
+        file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
+        file_path = file_paths[-1].audio_path
         
         # 음성 데이터 전처리 및 모델 예측
         audio_data = process_audio_file(file_path)
@@ -109,7 +108,7 @@ class SentenceView(APIView):
         # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
         sentence_instance = Sentence.objects.get(pk=pk)
         # Result 모델에 저장
-        result_instance = Result.objects.create(
+        result_instance = Result.objects.create( #반환 필요 시 변수 바로 사용 가능
         email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
         sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
         PronunProfEval=predictions[0][0],
