@@ -102,19 +102,22 @@ class SentenceView(APIView):
         audio_data = process_audio_file(file_path)
         mel_spectrogram = extract_mel_spectrogram(audio_data)
         preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
+        
         # 모델에 데이터 입력 및 예측
         model = tf.keras.models.load_model("my_model.h5")
         predictions = model.predict(preprocessed_data)
         
         # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
         sentence_instance = Sentence.objects.get(pk=pk)
+        
         # Result 모델에 저장
         result_instance = Result.objects.create( #반환 필요 시 변수 바로 사용 가능
-        email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
-        sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
-        PronunProfEval=predictions[0][0],
-        FluencyEval=predictions[1][0],
-        ComprehendEval=predictions[2][0])
+            email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
+            sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
+            PronunProfEval=round(max(0, float(predictions[0][0][0])), 2),
+            FluencyEval=round(max(0, float(predictions[1][0][0])), 2),
+            ComprehendEval=round(max(0, float(predictions[2][0][0])), 2)
+        )
         print("Result 객체가 성공적으로 생성되었습니다.")
         return Response("Result 객체가 성공적으로 생성되었습니다.", status=status.HTTP_201_CREATED)
         
