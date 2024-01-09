@@ -112,10 +112,20 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['content', 'writer', 'is_admin', 'created_at', 'updated_at']
+        fields = ['post', 'content', 'writer', 'is_admin', 'created_at', 'updated_at']
 
     def get_writer(self, obj):
         return obj.writer()
 
     def get_is_admin(self, obj):
         return obj.is_admin()
+
+    def create(self, validated_data):
+        print(validated_data)
+        post = validated_data.pop('post')
+        validated_data.pop('user', None)
+        user = self.context['request'].user
+        print(user)
+        comment = Comment.objects.create(post=post, user=user, **validated_data)
+        return comment
+
