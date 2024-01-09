@@ -25,10 +25,6 @@ class BookmarkSerializer(serializers.ModelSerializer):
         return obj.ko_text.ko_text
     
 class AudioFileSerializer(serializers.ModelSerializer):
-    audio_path = serializers.SerializerMethodField()
     class Meta:
         model = AudioFile
         fields = ['audio_path']
-
-    def get_file_path(self, obj):
-        return str(obj.audio_path)

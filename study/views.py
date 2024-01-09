@@ -52,7 +52,7 @@ def extract_mel_spectrogram(audio, target_sr=20000):
     mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
     return mel_spectrogram
 
-class SentenceView(CreateAPIView):
+class SentenceView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AudioFileSerializer
     parser_classes = (MultiPartParser,)
@@ -93,38 +93,30 @@ class SentenceView(CreateAPIView):
     
     def post(self, request, pk, *args, **kwargs):
         sentence = get_object_or_404(Sentence, pk=pk)
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.validated_data['email'] = request.user
-            serializer.validated_data['sentence'] = sentence
-            self.perform_create(serializer)
-            file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
-            file_path = file_paths[-1].audio_path
-
-            # 음성 데이터 전처리 및 모델 예측
-            audio_data = process_audio_file(file_path)
-            mel_spectrogram = extract_mel_spectrogram(audio_data)
-            preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
-            # 모델에 데이터 입력 및 예측
-            model = tf.keras.models.load_model("my_model.h5")
-            predictions = model.predict(preprocessed_data)
-
-            # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
-            sentence_instance = Sentence.objects.get(pk=pk)
-            # Result 모델에 저장
-            result_instance = Result.objects.create( #반환 필요 시 변수 바로 사용 가능
-            email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
-            sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
-            PronunProfEval=predictions[0][0],
-            FluencyEval=predictions[1][0],
-            ComprehendEval=predictions[2][0])
-            print("Result 객체가 성공적으로 생성되었습니다.")
-            return Response("Result 객체가 성공적으로 생성되었습니다.", status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def perform_create(self, serializer):
-        serializer.save()
+        print(sentence)
+        AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
+        file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
+        file_path = file_paths[-1].audio_path
+        
+        # 음성 데이터 전처리 및 모델 예측
+        audio_data = process_audio_file(file_path)
+        mel_spectrogram = extract_mel_spectrogram(audio_data)
+        preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
+        # 모델에 데이터 입력 및 예측
+        model = tf.keras.models.load_model("my_model.h5")
+        predictions = model.predict(preprocessed_data)
+        
+        # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
+        sentence_instance = Sentence.objects.get(pk=pk)
+        # Result 모델에 저장
+        result_instance = Result.objects.create( #반환 필요 시 변수 바로 사용 가능
+        email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
+        sentence=sentence_instance,  # 적절한 Sentence 모델 인스턴스
+        PronunProfEval=predictions[0][0],
+        FluencyEval=predictions[1][0],
+        ComprehendEval=predictions[2][0])
+        print("Result 객체가 성공적으로 생성되었습니다.")
+        return Response("Result 객체가 성공적으로 생성되었습니다.", status=status.HTTP_201_CREATED)
         
 
 class ResultView(APIView):
