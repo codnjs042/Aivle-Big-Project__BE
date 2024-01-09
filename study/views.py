@@ -1,3 +1,4 @@
+import base64, os
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Avg
 
@@ -51,6 +52,16 @@ def extract_mel_spectrogram(audio, target_sr=20000):
     mel_spectrogram = librosa.feature.melspectrogram(y=audio, sr=target_sr, n_mels=128)
     mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
     return mel_spectrogram
+def save_blob_as_wav(blob_data, filename):
+    # Blob 데이터를 base64로 디코딩
+    decoded_data = base64.b64decode(blob_data.split(',')[1])
+    # 저장할 파일 경로 설정 (media/audios 폴더에 저장)
+    file_path = os.path.join('media', 'audios', filename)
+    # WAV 파일로 저장
+    with open(file_path, 'wb') as file:
+        file.write(decoded_data)
+    # 저장된 파일 경로 반환
+    return file_path
 
 class SentenceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -93,8 +104,14 @@ class SentenceView(APIView):
     
     def post(self, request, pk, *args, **kwargs):
         sentence = get_object_or_404(Sentence, pk=pk)
-        print(sentence)
-        AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
+        
+        # FormData에서 blob 데이터 가져오기 (이 부분은 프론트엔드와 연동하여 구현 필요)
+        blob_data = request.data.get('audio_path')
+        filename = 'audio_test.wav'
+        # Blob 데이터를 WAV 파일로 저장하고 FileField에 저장
+        saved_file_path = save_blob_as_wav(blob_data, filename)
+        
+        AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=saved_file_path)
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
         file_path = file_paths[-1].audio_path
         
