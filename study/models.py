@@ -30,9 +30,9 @@ class Sentence(models.Model):
 class Result(models.Model):
     email = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='results')
     sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name='results')
-    PronunProfEval = models.IntegerField()
-    FluencyEval = models.IntegerField()
-    ComprehendEval = models.IntegerField()
+    PronunProfEval = models.FloatField()
+    FluencyEval = models.FloatField()
+    ComprehendEval = models.FloatField()
 
 class Bookmark(models.Model):
     email = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='bookmarks')
