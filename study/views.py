@@ -13,14 +13,18 @@ from .models import *
 from .serializers import *
 from user.models import User
 
-import tensorflow as tf
 import librosa
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 import os, io
 from pydub import AudioSegment
 from django.core.files import File
-from .models import AudioFile
+from jamo import h2j, j2hcj
+
+import tensorflow as tf
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import load_model
+from keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.text import Tokenizer
 
 # Create your views here.
 class SentencesListView(APIView):
@@ -58,10 +62,29 @@ def process_audio_file(file_path, target_sr=20000):
     scaler = MinMaxScaler()
     audio = scaler.fit_transform(audio.reshape(-1, 1)).flatten()
     return audio
+
 def extract_mel_spectrogram(audio, target_sr=20000):
     mel_spectrogram = librosa.feature.melspectrogram(y=audio, sr=target_sr, n_mels=128)
     mel_spectrogram = librosa.power_to_db(mel_spectrogram, ref=np.max)
     return mel_spectrogram
+
+# 오디오에서 MFCC 특성 추출하는 함수
+def process_audio(audio_path, n_mfcc=13):
+    y, sr = librosa.load(audio_path, sr=None)
+    mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
+    return np.mean(mfccs, axis=1).reshape(1, -1)
+
+# 전화를 숫자로 매핑하는 함수
+def map_phone_to_number(phone):
+    phoneme_mapping = {
+        'ㄱ': 1, 'ㄲ': 2, 'ㄴ': 3, 'ㄷ': 4, 'ㄸ': 5, 'ㄹ': 6, 'ㅁ': 7, 'ㅂ': 8, 'ㅃ': 9, 'ㅅ': 10,
+        'ㅆ': 11, 'ㅇ': 12, 'ㅈ': 13, 'ㅉ': 14, 'ㅊ': 15, 'ㅋ': 16, 'ㅌ': 17, 'ㅍ': 18, 'ㅎ': 19,
+        'ㅏ': 20, 'ㅐ': 21, 'ㅑ': 22, 'ㅒ': 23, 'ㅓ': 24, 'ㅔ': 25, 'ㅕ': 26, 'ㅖ': 27, 'ㅗ': 28,
+        'ㅘ': 29, 'ㅙ': 30, 'ㅚ': 31, 'ㅛ': 32, 'ㅜ': 33, 'ㅝ': 34, 'ㅞ': 35, 'ㅟ': 36, 'ㅠ': 37,
+        'ㅡ': 38, 'ㅢ': 39, 'ㅣ': 40, 'ㄳ': 41, 'ㄵ': 42, 'ㄶ': 43, 'ㄺ': 44, 'ㄻ': 45, 'ㄼ': 46,
+        'ㄽ': 47, 'ㄾ': 48, 'ㄿ': 49, 'ㅀ': 50, 'ㅄ': 51
+    }
+    return phoneme_mapping.get(phone, 0)
 
 class SentenceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -109,31 +132,91 @@ class SentenceView(APIView):
         
         # .webm > .wav
         audio_data = request.data['audio_path']
-        
-        audio_segment = AudioSegment.from_file(audio_data, 'webm')
+        print(audio_data)
+        print("this_error")
+        audio_segment = AudioSegment.from_file(audio_data, 'webm') #error 발생원인
         wav_path = audio_data.name.replace('.webm', '.wav')
         
         audio_segment.export(wav_path, format='wav')
-        
         audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
         with open(wav_path, 'rb') as f:
             audio_file.audio_path.save(os.path.basename(wav_path), File(f))
         
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
         file_path = file_paths[-1].audio_path
-        
-        # 음성 데이터 전처리 및 모델 예측
+
+        #----model1---------
+        # 음성 데이터 전처리 및 모델 예측(model1)
         audio_data = process_audio_file(file_path)
         mel_spectrogram = extract_mel_spectrogram(audio_data)
         preprocessed_data = np.expand_dims(mel_spectrogram, axis=0)
-        
         # 모델에 데이터 입력 및 예측
         model = tf.keras.models.load_model("my_model.h5")
         predictions = model.predict(preprocessed_data)
+
+        #----model2---------
+        # 모델 훈련 오디오 입력 모양
+        n_mfcc = 13
+        audio_data2 = process_audio("media/"+str(file_path), n_mfcc=n_mfcc)
+        text_data = "안녕하세요"
+        phoneme_mapping = {
+            'ㄱ': 1, 'ㄲ': 2, 'ㄴ': 3, 'ㄷ': 4, 'ㄸ': 5, 'ㄹ': 6, 'ㅁ': 7, 'ㅂ': 8, 'ㅃ': 9, 'ㅅ': 10,
+            'ㅆ': 11, 'ㅇ': 12, 'ㅈ': 13, 'ㅉ': 14, 'ㅊ': 15, 'ㅋ': 16, 'ㅌ': 17, 'ㅍ': 18, 'ㅎ': 19,
+            'ㅏ': 20, 'ㅐ': 21, 'ㅑ': 22, 'ㅒ': 23, 'ㅓ': 24, 'ㅔ': 25, 'ㅕ': 26, 'ㅖ': 27, 'ㅗ': 28,
+            'ㅘ': 29, 'ㅙ': 30, 'ㅚ': 31, 'ㅛ': 32, 'ㅜ': 33, 'ㅝ': 34, 'ㅞ': 35, 'ㅟ': 36, 'ㅠ': 37,
+            'ㅡ': 38, 'ㅢ': 39, 'ㅣ': 40, 'ㄳ': 41, 'ㄵ': 42, 'ㄶ': 43, 'ㄺ': 44, 'ㄻ': 45, 'ㄼ': 46,
+            'ㄽ': 47, 'ㄾ': 48, 'ㄿ': 49, 'ㅀ': 50, 'ㅄ': 51
+            }
+        # 전화 데이터를 모델 입력 형식으로 변환
+        phone_data = j2hcj(h2j(text_data))
+        mapped_phone_data = [map_phone_to_number(phone) for phone in phone_data]
         
+        # Text 데이터 전처리
+        max_text_length = len(text_data.split())  # 단어 수를 계산하여 최대 길이 설정
+        tokenizer = Tokenizer()
+        tokenizer.fit_on_texts([text_data])
+        encoded_text = tokenizer.texts_to_sequences([text_data])
+        padded_text = pad_sequences(encoded_text, maxlen=max_text_length, padding='post')
+
+        # 모델에 입력 데이터 전달
+        model_input = [
+            np.array([padded_text[0]]),          # 형태: (1, max_text_length)
+            np.array([audio_data2[0]]),            # 형태: (1, n_mfcc)
+            np.array([mapped_phone_data[0]])      # 형태: (1, 1)
+            ]
+        model2 = load_model("my_model_phone_error1.h5")
+        predictions2 = model2.predict(model_input)
+
+        # 예측 결과 중 확률이 일정 임계값 이상인 부분을 오류로 간주
+        threshold = 0.5
+        errors = predictions2 > threshold
+
+        # 각 음소에 대한 예측 확률
+        phone_probabilities = predictions2
+
+        # 각 음소에서 가장 높은 확률을 가진 인덱스 찾기
+        max_prob_indices = np.argmax(phone_probabilities, axis=-1)
+
+        # 예측된 음소 출력
+        predicted_phones = [list(phoneme_mapping.keys())[i] for i in max_prob_indices.flatten()]
+
+        # 오류 부분 및 해당 음소 출력
+        error_indices = np.where(errors)
+        error_phones = [predicted_phones[i] for i in error_indices[1]]
+
+        for i, index in enumerate(error_indices[1]):
+            predicted_word = text_data.split()[index]
+            print(f"Error {i + 1}:")
+            print(f" - Error Position (Word): {predicted_word}")
+            print(type(predicted_word))
+            print(f" - Predicted Phones: {error_phones[i]}")
+            print(type(error_phones))
+            print(f" - Text Data: {text_data}")
+            print()
+
         # 적절한 Sentence 모델 인스턴스를 가져오는 코드 (예시)
         sentence_instance = Sentence.objects.get(pk=pk)
-        
+
         # Result 모델에 저장
         result_instance = Result.objects.create( #반환 필요 시 변수 바로 사용 가능
             email=request.user,  # 유저 이메일 또는 사용자 인증에 따라 맞게 변경
