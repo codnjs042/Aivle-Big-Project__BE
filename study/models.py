@@ -1,6 +1,7 @@
 from django.db import models
 from korean_romanizer.romanizer import Romanizer
 from googletrans import Translator
+from study.validators import AudioFileValidator
 
 class Sentence(models.Model):
     title = models.TextField(null=True, blank=True)
@@ -40,6 +41,6 @@ class Bookmark(models.Model):
     is_bookmarked = models.BooleanField(default=False)
 
 class AudioFile(models.Model):
-    audio_path = models.FileField(upload_to='audios/')
+    audio_path = models.FileField(upload_to='audios/', validators=[AudioFileValidator])
     email = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='audiofile', null=True)
     sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name='audiofile', null=True)

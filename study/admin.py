@@ -3,8 +3,8 @@ from .models import *
 
 # Register your models here.
 class SentenceAdmin(admin.ModelAdmin):
-    list_display = ['title', 'ko_text', 'en_text', 'pronunciation','tag']#, 'Gtag', 'Atag']
-    list_display_links = ['title','ko_text', 'en_text', 'pronunciation','tag']#, 'Gtag', 'Atag']
+    list_display = ['id', 'title', 'ko_text', 'en_text', 'pronunciation','tag']#, 'Gtag', 'Atag']
+    list_display_links = ['id', 'title','ko_text', 'en_text', 'pronunciation','tag']#, 'Gtag', 'Atag']
 
 class ResultAdmin(admin.ModelAdmin):
     list_display = ['email','sentence','PronunProfEval', 'FluencyEval', 'ComprehendEval']

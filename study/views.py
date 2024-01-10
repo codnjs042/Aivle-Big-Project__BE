@@ -17,6 +17,10 @@ import tensorflow as tf
 import librosa
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+import os, io
+from pydub import AudioSegment
+from django.core.files import File
+from .models import AudioFile
 
 # Create your views here.
 class SentencesListView(APIView):
@@ -102,7 +106,19 @@ class SentenceView(APIView):
         sentence = get_object_or_404(Sentence, pk=pk)
         print(sentence)
         print(request.data)
-        AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
+        
+        # .webm > .wav
+        audio_data = request.data['audio_path']
+        
+        audio_segment = AudioSegment.from_file(audio_data, 'webm')
+        wav_path = audio_data.name.replace('.webm', '.wav')
+        
+        audio_segment.export(wav_path, format='wav')
+        
+        audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
+        with open(wav_path, 'rb') as f:
+            audio_file.audio_path.save(os.path.basename(wav_path), File(f))
+        
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
         file_path = file_paths[-1].audio_path
         
