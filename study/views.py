@@ -118,8 +118,8 @@ class SentenceView(APIView):
             FluencyEval=round(max(0, float(predictions[1][0][0])), 2),
             ComprehendEval=round(max(0, float(predictions[2][0][0])), 2)
         )
-        print("Result 객체가 성공적으로 생성되었습니다.")
-        return Response(result_instance, status=status.HTTP_201_CREATED)
+        serializer = ResultSerializer(result_instance)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
         
 
 class ResultView(APIView):
