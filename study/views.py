@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Avg
-
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -21,11 +21,18 @@ from sklearn.preprocessing import MinMaxScaler
 # Create your views here.
 class SentencesListView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
+    @extend_schema(parameters=[
+        OpenApiParameter(name="sentence", description="문장", required=False,
+                         type=str)])
     def get(self, request):
+        if request.GET.get('sentence'):
+            sentence = get_list_or_404(Sentence, ko_text__contains=request.GET.get('sentence'))
+            print(sentence[0].ko_text)
+            return Response({"id": sentence[0].id}, status=status.HTTP_200_OK)
+
         paginator = PageNumberPagination()
         paginator.page_size = 10
-
         sentences = Sentence.objects.all()
         page = paginator.paginate_queryset(sentences, request)
         if page is not None:
