@@ -94,6 +94,7 @@ class SentenceView(APIView):
     def post(self, request, pk, *args, **kwargs):
         sentence = get_object_or_404(Sentence, pk=pk)
         print(sentence)
+        print(request.data)
         AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
         file_path = file_paths[-1].audio_path
