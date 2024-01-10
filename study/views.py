@@ -120,7 +120,6 @@ class SentenceView(APIView):
         )
         serializer = ResultSerializer(result_instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
 
 class ResultView(APIView):
     permission_classes = [IsAuthenticated]
