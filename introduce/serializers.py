@@ -13,7 +13,8 @@ def get_time_difference(self, datetime_field):
         else:
             return f"{time_since} 전"
     else:
-        return datetime_field.astimezone(timezone.get_default_timezone()).strftime('%y시 %m월 %d일')
+        return datetime_field.astimezone(timezone.get_default_timezone()).strftime('%y년 %m월 %d일')
+    
 class PostListSerializer(serializers.ModelSerializer):
     writer = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
