@@ -223,7 +223,7 @@ class SentenceView(APIView):
             FluencyEval=round(max(0, float(predictions[1][0][0])), 2),
             ComprehendEval=round(max(0, float(predictions[2][0][0])), 2)
         )
-        serializer = ResultSerializer(result_instance)
+        serializer = ResultScoreSerializer(result_instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class ResultView(APIView):

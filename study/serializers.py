@@ -14,6 +14,29 @@ class ResultSerializer(serializers.ModelSerializer):
         model = Result
         fields = ['email', 'sentence', 'PronunProfEval', 'FluencyEval', 'ComprehendEval']
 
+class ResultScoreSerializer(serializers.ModelSerializer):
+    sentence = serializers.SerializerMethodField()
+    PronunProfEval = serializers.SerializerMethodField()
+    FluencyEval = serializers.SerializerMethodField()
+    ComprehendEval = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Result
+        fields = ['sentence', 'PronunProfEval', 'FluencyEval', 'ComprehendEval']
+
+    def get_sentence(self, obj):
+        return obj.sentence.ko_text
+    
+    def get_PronunProfEval(self, obj):
+        return obj.PronunProfEval * 20
+    
+    def get_FluencyEval(self, obj):
+        return obj.FluencyEval * 20
+    
+    def get_ComprehendEval(self, obj):
+        return obj.ComprehendEval * 20
+
+
 class BookmarkSerializer(serializers.ModelSerializer):
     text = serializers.SerializerMethodField()
 
