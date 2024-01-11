@@ -128,17 +128,21 @@ class SentenceView(APIView):
         print(sentence)
         print(request.data)
         
-        # .webm > .wav
         audio_data = request.data['audio_path']
-        print(audio_data)
-        print("this_error")
-        audio_segment = AudioSegment.from_file(audio_data, 'webm') #error 발생원인
-        wav_path = audio_data.name.replace('.webm', '.wav')
-        
-        audio_segment.export(wav_path, format='wav')
-        audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
-        with open(wav_path, 'rb') as f:
-            audio_file.audio_path.save(os.path.basename(wav_path), File(f))
+        file_extension = str(audio_data.name).split('.')[-1].lower()
+        print('>>>>>>>>>>', file_extension)
+        if file_extension == 'webm':  # .webm > .wav 변환
+            audio_segment = AudioSegment.from_file(audio_data, 'webm')
+            wav_path = audio_data.name.replace('.webm', '.wav')
+            
+            audio_segment.export(wav_path, format='wav')
+            audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
+            with open(wav_path, 'rb') as f:
+                audio_file.audio_path.save(os.path.basename(wav_path), File(f))
+        elif file_extension == 'wav':  # .wav 파일 바로 저장
+            AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
+        else :  # 파일이 없거나 이상한 형식이거나
+            return Response({'message': 'No audio_path provided'}, status=status.HTTP_400_BAD_REQUEST)
         
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
         file_path = file_paths[-1].audio_path
