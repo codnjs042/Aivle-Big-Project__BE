@@ -6,7 +6,6 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView, CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 
 from .models import *
@@ -15,7 +14,7 @@ from user.models import User
 
 import librosa
 import numpy as np
-import os, io
+import os
 from pydub import AudioSegment
 from django.core.files import File
 from jamo import h2j, j2hcj
@@ -74,7 +73,6 @@ def process_audio(audio_path, n_mfcc=13):
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
     return np.mean(mfccs, axis=1).reshape(1, -1)
 
-# 전화를 숫자로 매핑하는 함수
 def map_phone_to_number(phone):
     phoneme_mapping = {
         'ㄱ': 1, 'ㄲ': 2, 'ㄴ': 3, 'ㄷ': 4, 'ㄸ': 5, 'ㄹ': 6, 'ㅁ': 7, 'ㅂ': 8, 'ㅃ': 9, 'ㅅ': 10,

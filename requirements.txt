@@ -45,3 +45,7 @@ typing_extensions==4.9.0
 uritemplate==4.1.1
 urllib3==2.1.0
 jamo==0.4.1
+librosa==0.10.1
+pydub==0.25.1
+tensorflow==2.15.0
+keras==2.15.0
