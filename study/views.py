@@ -133,7 +133,7 @@ class SentenceView(APIView):
             audio_segment = AudioSegment.from_file(audio_data, 'webm')
             wav_path = audio_data.name.replace('.webm', '.wav')
             
-            # audio_segment.export(wav_path, format='wav')
+            audio_segment.export(wav_path, format='wav')
             audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
             with open(wav_path, 'rb') as f:
                 audio_file.audio_path.save(os.path.basename(wav_path), File(f))
