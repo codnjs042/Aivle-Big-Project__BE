@@ -52,7 +52,7 @@ GIF Images
 
 ## 라이센스
 
-### Unlicense license
+이 프로젝트는 Unlicense 라이선스에 따라 사용이 허가됩니다. 이는 여러분이 이 프로젝트를 어떤 목적으로든지 제약 없이 사용할 수 있음을 의미합니다. 자세한 내용은 [여기](http://unlicense.org)를 참조하세요.
 
 <!-- Stack Icon Refernces -->
 
