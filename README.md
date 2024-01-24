@@ -13,7 +13,7 @@ AivleSchool 4기 충남/충북 7반 21조 빅프로젝트
 </p>
 
 <p align="center">
-GIF Images
+<img src="./intro.jpg" height="300">
 </p>
 
 <br>
