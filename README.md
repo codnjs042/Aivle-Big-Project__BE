@@ -52,7 +52,7 @@ GIF Images
 
 ## 라이센스
 
-MIT &copy; [NoHack](mailto:lbjp114@gmail.com)
+### Unlicense license
 
 <!-- Stack Icon Refernces -->
 
