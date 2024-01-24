@@ -31,8 +31,6 @@ AivleSchool 4기 충남/충북 7반 21조 빅프로젝트
 
 ## 사용 방법
 
-<br>
-
 ### 1. Python3.10 설치
 
 ### 2. package 설치
@@ -40,8 +38,6 @@ AivleSchool 4기 충남/충북 7반 21조 빅프로젝트
 
 ### 3. dev 서버 실행
     python manage.py runserver
-
-<br>
 
 ## 구현 기능
 
