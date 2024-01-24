@@ -22,9 +22,7 @@ GIF Images
 
 ## 기술 스택
 
-<img src="https://img.shields.io/badge/python3.10-3776AB?style=for-the-badge&logo=python&logoColor=white">
-<img src="https://img.shields.io/badge/django5.0-092E20?style=for-the-badge&logo=django&logoColor=white">
-<img src="https://img.shields.io/badge/tensorflow2-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white">
+<img src="https://img.shields.io/badge/python@3.10-3776AB?style=for-the-badge&logo=python&logoColor=white"> | <img src="https://img.shields.io/badge/django@5.0-092E20?style=for-the-badge&logo=django&logoColor=white"> | <img src="https://img.shields.io/badge/tensorflow@2-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white">
 
 <br>
 
