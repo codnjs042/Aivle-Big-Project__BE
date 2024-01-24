@@ -22,9 +22,9 @@ GIF Images
 
 ## 기술 스택
 
-| Python | Django |  Tensorflow   |
+| Python | Django | Tensorflow |
 | :--------: | :--------: | :------: |
-|   ![python]    |   ![django]    | ![tensorflow] |
+|   <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">     |   ![django]    | ![tensorflow] |
 
 <br>
 
