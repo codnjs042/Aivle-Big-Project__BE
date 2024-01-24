@@ -1,6 +1,6 @@
 # Aivle 4기 21조 빅프로젝트 "바름" Backend Part
 
-<p align="center">
+<p>
   <br>
   <img src="./logo.jpg" height="300">
   <br>
@@ -8,11 +8,11 @@
 
 ## 프로젝트 소개
 
-<p align="justify">
+<>
 AivleSchool 4기 충남/충북 7반 21조 빅프로젝트
 </p>
 
-<p align="center">
+<p>
 <img src="./intro.jpg" height="300">
 </p>
 
