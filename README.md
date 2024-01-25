@@ -44,27 +44,28 @@ AivleSchool 4기 충남/충북 7반 21조 빅프로젝트
 ## 구현 기능
 
 ### 백엔드 기능 공통
-- Django 어드민 페이지 [X]
-- API 문서화 (drf-spectacular) [X]
+- [X] Django 어드민 페이지 
+- [X] API 문서화 (drf-spectacular)
+- [X] CORS 보안 (화이트리스트)
 
 ### 회원가입 및 로그인
-- 로그인 (JWT) [X]
-- 회원가입 [X]
-- Google Recaptcha V2 적용 [X]
+- [X] 로그인 (JWT) 
+- [X] 회원가입 
+- [X] Google Recaptcha V2
 
 ### 공지 게시판 및 댓글
-- 게시판 CRUD [X]
-- 댓글 CRUD [X] 
+- [X] 게시판 CRUD 
+- [X] 댓글 CRUD 
 
 ### 음성녹음파일 업로드 및 AI 평가
-- 음성파일 업로드 - [X]
-- 음성파일 평가 AI - [X]
-- 평가결과 저장 - [X]
-- AI 자동튜닝 - [ ]
+- [X] 음성파일 업로드 
+- [X] 음성파일 평가 AI 
+- [X] 평가결과 저장
+- [ ] AI 자동튜닝
     
 ### 쇼츠 게시판 및 댓글
-- 게시판 CRUD - [X]
-- 댓글 CRUD [X] 
+- [X] 게시판 CRUD
+- [X] 댓글 CRUD 
 
 <br>
 
