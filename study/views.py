@@ -129,17 +129,28 @@ class SentenceView(APIView):
         audio_data = request.data['audio_path']
         file_extension = str(audio_data.name).split('.')[-1].lower()
         
-        if file_extension == 'webm':  # .webm > .wav 변환
+        if file_extension == 'webm':    # .webm > .wav 변환
             audio_segment = AudioSegment.from_file(audio_data, 'webm')
             wav_path = audio_data.name.replace('.webm', '.wav')
-            
             audio_segment.export(wav_path, format='wav')
             audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
             with open(wav_path, 'rb') as f:
                 audio_file.audio_path.save(os.path.basename(wav_path), File(f))
-        elif file_extension == 'wav':  # .wav 파일 바로 저장
+            os.remove(wav_path)
+            
+        elif file_extension == 'm4a':    # .m4a > .wav 변환
+            audio_segment = AudioSegment.from_file(audio_data, 'm4a')
+            wav_path = audio_data.name.replace('.m4a', '.wav')
+            audio_segment.export(wav_path, format='wav')
+            audio_file = AudioFile.objects.create(email=request.user, sentence=sentence)
+            with open(wav_path, 'rb') as f:
+                audio_file.audio_path.save(os.path.basename(wav_path), File(f))
+            os.remove(wav_path)
+
+        elif file_extension == 'wav':   # .wav 파일 바로 저장
             AudioFile.objects.create(email=request.user, sentence=sentence, audio_path=request.data['audio_path'])
-        else :  # 파일이 없거나 이상한 형식이거나
+            
+        else :                          # 파일이 없거나 다른 형식 파일은 처리 x
             return Response({'message': 'No audio_path provided'}, status=status.HTTP_400_BAD_REQUEST)
         
         file_paths = get_list_or_404(AudioFile, sentence=pk, email=request.user)
